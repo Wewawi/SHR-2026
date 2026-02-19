@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+</head>
+
+<body>
+    <div id="loader">MENGAMBIL DATA...</div>
+    <div><a href="https://ibb.co.com/xR9029C"><img src="https://i.ibb.co.com/5fpy1pM/Kop-WASPADA-Warna.png" alt="Kop-WASPADA-Warna" border="0"></a>
+        <div>
+            <h1>********* DAN USULAN SHR 2026</h1><span>Periode April 2025 s.d. Maret 2026</span>
+            <p>***** memudahkan pengisian silakan ***** nama atau pilih **** kerja</p>
+        </div>
+    </div>
+    <div><input type="text" id="srch" placeholder="Cari Nama / Unit..."> <select id="fltr">&nbsp;<option value="">-- Semua **** Kerja --</option>&nbsp;</select> <button>***** DATA</button>
+        <div>TOTAL: <span id="count">0</span> PERSONIL</div>
+    </div>
+    <div>
+        <table>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama Personil</th>
+                    <th>**** Kerja</th>
+                    <th>Qty</th>
+                    <th>Setoran</th>
+                    <th>SHR</th>
+                    <th>Jasa</th>
+                    <th>Total</th>
+                    <th>Usulan SHR</th>
+                </tr>
+            </thead>
+            <tbody id="isi"></tbody>
+        </table>
+    </div>
+    <div id="msg">✅ Tersimpan!</div>
+    <script>
+        var db = [];
+        var colors = {};
+        var palette = [{b:'#e3f2fd',t:'#0d47a1'},{b:'#f1f8e9',t:'#33691e'},{b:'#fff3e0',t:'#e65100'},{b:'#f3e5f5',t:'#4a148c'},{b:'#e0f2f1',t:'#004d40'}];
+        
+        function load() {
+          google.script.run.withSuccessHandler(function(res) {
+            db = res;
+            var fObj = document.getElementById('fltr');
+            var uList = [];
+            for(var i=0; i<db.length; i++){
+              if(uList.indexOf(db[i].Unit_Kerja) === -1) uList.push(db[i].Unit_Kerja);
+            }
+            uList.sort().forEach(function(u, idx) {
+              colors[u] = palette[idx % palette.length];
+              var opt = document.createElement('option');
+              opt.value = u; opt.text = u;
+              fObj.appendChild(opt);
+            });
+            document.getElementById('loader').style.display = 'none';
+            tampil();
+          }).getData();
+        }
+        
+        function formatIDR(v) {
+          if(!v || v === "") return "";
+          var num = v.toString().replace(/[^0-9]/g, '');
+          return Number(num).toLocaleString('id-ID');
+        }
+        
+        function tampil() {
+          var s = document.getElementById('srch').value.toLowerCase();
+          var f = document.getElementById('fltr').value;
+          var html = '';
+          var filtered = db.filter(function(x) {
+            var n = (x.Nama || "").toLowerCase();
+            var u = (x.Unit_Kerja || "").toLowerCase();
+            return (n.indexOf(s) > -1 || u.indexOf(s) > -1) && (f === "" || x.Unit_Kerja === f);
+          });
+        
+          document.getElementById('count').innerText = filtered.length;
+        
+          for(var j=0; j<filtered.length; j++){
+            var item = filtered[j];
+            var c = colors[item.Unit_Kerja] || {b:'#eee', t:'#333'};
+            var valTampil = formatIDR(item.Usulan_SHR);
+            
+            html += '<tr>';
+            html += '<td>'+(j+1)+'</td>';
+            **** += '<td><strong>'+(item.Nama || "")+'</strong></td>';
+            **** += '<td><span>'+item.Unit_Kerja+'</span></td>';
+            html += '<td>'+(item.*** || 0)+'</td>';
+            **** += '<td>'+formatIDR(item.Setoran)+'</td>';
+            html += '<td>'+formatIDR(item.Jumlah_SHR)+'</td>';
+            html += '<td>'+formatIDR(item.Jasa_SHR)+'</td>';
+            html += '<td><strong>'+formatIDR(item.Total)+'</strong></td>';
+            // Tambahkan class .nav-input dan data-index untuk navigasi enter
+            html += '<td><input type="text" value="'+valTampil+'" onfocus="this.value=this.value.replace(/\\./g,\'\')" onblur="handleSimpan('+item.rowNum+', this)" onkeydown="handleEnter(event, '+j+')"></td>';
+            **** += '</tr>';
+          }
+          document.getElementById('isi').innerHTML = html;
+        }
+        
+        // Fungsi navigasi Enter
+        function handleEnter(e, currentIdx) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            var nextInput = document.querySelector('.nav-input[data-idx="' + (currentIdx + 1) + '"]');
+            if (nextInput) {
+              nextInput.focus();
+            } else {
+              // Jika sudah di baris terakhir, hilangkan fokus
+              document.activeElement.blur();
+            }
+          }
+        }
+        
+        function handleSimpan(rowNum, el) {
+          var rawVal = el.value.replace(/[^0-9]/g, '');
+          el.value = formatIDR(rawVal);
+          
+          el.style.borderBottomColor = "#ffc107";
+          google.script.run.withSuccessHandler(function() {
+            el.style.borderBottomColor = "#28a745";
+            var m = document.getElementById('msg');
+            m.style.display = 'block';
+            setTimeout(function(){ m.style.display='none'; el.style.borderBottomColor='#0056b3'; }, 1500);
+          }).updateUsulan(rowNum, rawVal);
+        }
+        
+        function reset() {
+          document.getElementById('srch').value = '';
+          document.getElementById('fltr').value = '';
+          tampil();
+        }
+        
+        window.onload = load;
+    </script>
+
+<div style="color: red">Word to HTML trial - please <a href="https://wordtohtml.net/site/payment">Go PRO</a> to get whole HTML.</div>
+</body>
+
+</html>
